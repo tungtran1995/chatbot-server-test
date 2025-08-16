@@ -17,7 +17,7 @@ import numpy as np
 load_dotenv()
 
 # Load environment variables
-api_key='sk-mz9ts5ybDhhKxy3RZHMVwA'
+api_key=os.getenv('OPENAI_API_KEY')
 base_url=os.getenv('OPENAI_ENDPOINT')
 db_chat_history_collection=os.getenv('DB_CHAT_HISTORY_COLLECTION')
 collection_name=os.getenv('COLLECTION_NAME')

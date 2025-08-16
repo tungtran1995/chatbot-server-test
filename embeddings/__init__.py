@@ -1,0 +1,1 @@
+from embeddings.core import EmbeddingModel

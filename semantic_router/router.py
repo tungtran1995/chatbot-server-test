@@ -1,29 +1,30 @@
 import numpy as np
 
 class SemanticRouter():
-    def __init__(self, embedding, routes):
-        self.embedding = embedding
+    def __init__(self, routes, embedding):
         self.routes = routes
+        self.embedding = embedding
         self.routesEmbedding = {}
 
         for route in self.routes:
-            self.routesEmbedding[route.name] = self.embedding.encode(route.samples)
+            self.routesEmbedding[
+                route.name
+            ] = self.embedding.embed_documents(route.samples)
 
     def get_routes(self):
         return self.routes
-    
+
     def guide(self, query):
-        queryEmbedding = self.embedding.encode[query]
+        queryEmbedding = self.embedding.embed_query(query)
         queryEmbedding = queryEmbedding / np.linalg.norm(queryEmbedding)
         scores = []
 
-        # Calculate the similarity scores for each route
+        # Calculate the cosine similarity of the query embedding with the sample embeddings of the router.
+
         for route in self.routes:
             routesEmbedding = self.routesEmbedding[route.name] / np.linalg.norm(self.routesEmbedding[route.name])
             score = np.mean(np.dot(routesEmbedding, queryEmbedding.T).flatten())
-            scores.append(score,route.name)
+            scores.append((score, route.name))
 
-        # Sort the scores in descending order and return the highest score
         scores.sort(reverse=True)
-        return scores[0]
-        
+        return scores

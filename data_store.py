@@ -21,8 +21,7 @@ with open('data.json', 'r', encoding='utf-8') as f:
 # Khởi tạo client cho Azure OpenAI Embedding
 embedding_client = OpenAI(  
     api_key=AZURE_OPENAI_EMBEDDING_API_KEY,  
-    azure_endpoint=AZURE_OPENAI_EMBEDDING_ENDPOINT,  
-    api_version="2023-05-15"  
+    base_url=AZURE_OPENAI_EMBEDDING_ENDPOINT,  
 )  
 
 chroma_client = chromadb.PersistentClient(path='VECTOR_STORE')

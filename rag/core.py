@@ -10,15 +10,12 @@ try:
 except (TypeError, ValueError):
     DEFAULT_SEARCH_LIMIT = 5
 
-sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="keepitreal/vietnamese-sbert")
-
 class RAG():
     def __init__(self, collection_name: str, db_path: str):
         self.client = chromadb.PersistentClient(path=db_path)
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
-            embedding_function=sentence_transformer_ef
-        )
+        )        
 
     def weighted_reciprocal_rank(self, doc_lists, weights=None, c=60):
         if not doc_lists:

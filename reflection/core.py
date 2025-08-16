@@ -11,7 +11,7 @@ OPEN_AI_ROLE_MAPPING = {
 }
 
 class Reflection:
-    def __init__(self, llm, db_path: str, dbChatHistoryCollection: str, semanticCacheCollection: str, cache_ttl: int = 3600):
+    def __init__(self, llm, db_path: str, dbChatHistoryCollection: str, semanticCacheCollection: str):
         """
         llm: instance của OpenAiClient (chat() trả về string)
         db_path: thư mục lưu trữ dữ liệu ChromaDB
@@ -22,8 +22,8 @@ class Reflection:
         self.client = chromadb.PersistentClient(path=db_path)
         self.his_collection = self.client.get_or_create_collection(name=dbChatHistoryCollection)
         self.semantic_cache_collection = self.client.get_or_create_collection(name=semanticCacheCollection)
-        self.llm = llm,
-        self.cache_ttl = cache_ttl
+        self.llm = llm
+        #self.cache_ttl = cache_ttl
 
     def chat(self, session_id: str, enhanced_message: str, original_message: str = '', cache_response: bool = False, query_embedding: list = None):
         print('call')

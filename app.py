@@ -6,13 +6,18 @@ from rag.core import RAG
 from semantic_router import SemanticRouter, Route
 from semantic_router.samples import productsSample, chitchatSample
 from reflection.core import Reflection
+from langchain_openai import ChatOpenAI
+from langchain_core.runnables import RunnableLambda
+from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, Field
+from typing import List, Optional
 import os
 from dotenv import load_dotenv
 import numpy as np
 load_dotenv()
 
 # Load environment variables
-api_key=os.getenv('OPENAI_API_KEY')
+api_key='sk-mz9ts5ybDhhKxy3RZHMVwA'
 base_url=os.getenv('OPENAI_ENDPOINT')
 db_chat_history_collection=os.getenv('DB_CHAT_HISTORY_COLLECTION')
 collection_name=os.getenv('COLLECTION_NAME')
@@ -29,6 +34,45 @@ openai_embed_model = OpenAIEmbeddingModel(
     model_name=os.getenv("OPEN_API_EMBEDDING_MODEL", "text-embedding-ada-002"),
     endpoint=os.getenv("OPENAI_ENDPOINT")
 )
+
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    temperature=0,
+)
+
+class ProductInfo(BaseModel):
+    brand: Optional[str] = Field(None, description="Thương hiệu sản phẩm")
+    category: Optional[str] = Field(None, description="Loại sản phẩm")
+    tags: List[str] = Field(default_factory=list, description="Các tag liên quan")
+    description: str = Field("", description="Mô tả sản phẩm")
+
+# Warp LLM with structured output
+llm_structured = llm.with_structured_output(ProductInfo)
+
+#  Lambda function to parse user input
+parse_input = RunnableLambda(lambda user_input: [
+    HumanMessage(content=(
+                        f"""You are an AI assistant specialized in technology products. Please extract structured information from the following input:
+                        {user_input}
+                        Only extract information that is explicitly mentioned in the text. Do not infer, guess, or add unrelated content
+                        Respond strictly in English.
+                        Return a JSON object with the following fields: brand, category, tags, description, specs."""
+    ))
+])
+
+def parse_product_info(product_info: ProductInfo) -> str:
+    """
+    Convert ProductInfo object to a string representation.
+    """
+    return (
+        f"Brand: {product_info.brand}\n"
+        f"Category: {product_info.category}\n"
+        f"Tags: {', '.join(product_info.tags)}\n"
+        f"Description: {product_info.description}"
+    )
+
+#  Create chain to combine parsing and LLM
+product_chain = parse_input | llm_structured
 
 rag = RAG(
     collection_name=collection_name,
@@ -53,8 +97,9 @@ def chat():
     data = request.get_json()
     session_id = data.get('session_id', '')
     query = data.get('query', '')
-
-    guided_route = semanticRouter.guide(query)[1]
+    product_info = product_chain.invoke(query)
+    print(f"product info: {product_info}")
+    guided_route = semanticRouter.guide(parse_product_info(product_info))[1]
     print(f"semantic route: {guided_route}")
 
     if guided_route == PRODUCT_ROUTE_NAME:
